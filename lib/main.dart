@@ -14,8 +14,6 @@ class YaraApp extends StatelessWidget {
     return MaterialApp(
       title: 'یارا',
       debugShowCheckedModeBanner: false,
-      locale: const Locale('fa', 'IR'),
-      supportedLocales: const [Locale('fa', 'IR')],
       theme: ThemeData(
         fontFamily: 'Vazir',
         scaffoldBackgroundColor: const Color(0xFFFFFFFF),
