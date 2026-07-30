@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:local_auth/local_auth.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,14 +15,56 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _isLogin = true;
   bool _obscurePassword = true;
+  bool _isAuthenticating = false;
   final _nameController = TextEditingController();
   final _passwordController = TextEditingController();
+  final LocalAuthentication _auth = LocalAuthentication();
 
   @override
   void dispose() {
     _nameController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _authenticateWithBiometrics() async {
+    setState(() => _isAuthenticating = true);
+    try {
+      final bool canCheckBiometrics = await _auth.canCheckBiometrics;
+      final bool isDeviceSupported = await _auth.isDeviceSupported();
+
+      if (!canCheckBiometrics || !isDeviceSupported) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('اثر انگشت یا تشخیص چهره در این دستگاه پشتیبانی نمی‌شود.')),
+        );
+        return;
+      }
+
+      final bool didAuthenticate = await _auth.authenticate(
+        localizedReason: 'برای ورود به یارا، هویت خود را تأیید کنید',
+        options: const AuthenticationOptions(
+          biometricOnly: true,
+          stickyAuth: true,
+        ),
+      );
+
+      if (!mounted) return;
+      if (didAuthenticate) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const _PlaceholderHome()),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('امکان تأیید هویت وجود ندارد: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isAuthenticating = false);
+      }
+    }
   }
 
   @override
@@ -39,14 +82,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 30),
                 Center(
                   child: Container(
-                    width: 90,
-                    height: 90,
+                    width: 98,
+                    height: 98,
                     decoration: BoxDecoration(
                       color: darkPurple,
                       borderRadius: BorderRadius.circular(24),
                     ),
-                    child: const Icon(Icons.watch_later_rounded,
-                        color: gold, size: 44),
+                    child: Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: Image.asset('assets/icon/yara_logo.png', fit: BoxFit.contain),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -68,8 +113,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 36),
-
-                // نام کاربری
                 _buildLabel('نام'),
                 _buildTextField(
                   controller: _nameController,
@@ -77,8 +120,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   icon: Icons.person_outline,
                 ),
                 const SizedBox(height: 18),
-
-                // رمز عبور
                 _buildLabel('رمز عبور'),
                 _buildTextField(
                   controller: _passwordController,
@@ -98,14 +139,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-
-                // ورود با اثر انگشت
                 Align(
                   alignment: Alignment.centerLeft,
                   child: TextButton.icon(
-                    onPressed: () {
-                      // TODO: اتصال به local_auth برای اثر انگشت/فیس‌آیدی
-                    },
+                    onPressed: _isAuthenticating ? null : _authenticateWithBiometrics,
                     icon: const Icon(Icons.fingerprint, color: purple),
                     label: const Text(
                       'ورود با اثر انگشت',
@@ -114,17 +151,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-
-                // دکمه اصلی
                 SizedBox(
                   height: 54,
                   child: ElevatedButton(
                     onPressed: () {
-                      // TODO: منطق واقعی ورود/ثبت‌نام
                       Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (_) => const _PlaceholderHome(),
-                        ),
+                        MaterialPageRoute(builder: (_) => const _PlaceholderHome()),
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -145,8 +177,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 18),
-
-                // سوییچ بین ورود و ثبت‌نام
                 Center(
                   child: TextButton(
                     onPressed: () {
@@ -154,9 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                     child: Text.rich(
                       TextSpan(
-                        text: _isLogin
-                            ? 'هنوز حساب نداری؟ '
-                            : 'قبلاً ثبت‌نام کردی؟ ',
+                        text: _isLogin ? 'هنوز حساب نداری؟ ' : 'قبلاً ثبت‌نام کردی؟ ',
                         style: TextStyle(color: Colors.grey.shade700),
                         children: [
                           TextSpan(
@@ -210,8 +238,7 @@ class _LoginScreenState extends State<LoginScreen> {
         suffixIcon: Icon(icon, color: Colors.grey),
         filled: true,
         fillColor: const Color(0xFFF7F5FB),
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
@@ -229,7 +256,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-/// صفحه موقت که بعد از ورود نشون داده میشه (تا داشبورد اصلی رو بسازیم)
 class _PlaceholderHome extends StatelessWidget {
   const _PlaceholderHome();
 
@@ -239,7 +265,9 @@ class _PlaceholderHome extends StatelessWidget {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(title: const Text('یارا')),
-        body: const Center(child: Text('به زودی: داشبورد اصلی یارا')),
+        body: const Center(
+          child: Text('به زودی: داشبورد اصلی یارا'),
+        ),
       ),
     );
   }
