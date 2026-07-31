@@ -89,4 +89,3 @@ class PersianDate {
     return (w - 6 + 7) % 7;
   }
 }
-
