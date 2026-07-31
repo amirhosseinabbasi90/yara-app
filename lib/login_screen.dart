@@ -1,6 +1,7 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
+import 'orbiting_logo.dart';
+import 'home_shell.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -9,9 +10,7 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _orbitController;
+class _LoginScreenState extends State<LoginScreen> {
   static const Color purple = Color(0xFF482E83);
   static const Color darkPurple = Color(0xFF1E1338);
   static const Color gold = Color(0xFFD4AF37);
@@ -30,10 +29,6 @@ class _LoginScreenState extends State<LoginScreen>
   void initState() {
     super.initState();
     _checkBiometrics();
-    _orbitController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 18),
-    )..repeat();
   }
 
   Future<void> _checkBiometrics() async {
@@ -68,14 +63,16 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   void _goToHome() {
+    final name = _nameController.text.trim();
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const _PlaceholderHome()),
+      MaterialPageRoute(
+        builder: (_) => HomeShell(userName: name.isEmpty ? 'کاربر' : name),
+      ),
     );
   }
 
   @override
   void dispose() {
-    _orbitController.dispose();
     _nameController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -102,12 +99,8 @@ class _LoginScreenState extends State<LoginScreen>
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 20),
-                  Center(
-                    child: SizedBox(
-                      width: 190,
-                      height: 190,
-                      child: _OrbitingLogo(controller: _orbitController),
-                    ),
+                  const Center(
+                    child: OrbitingLogo(size: 190),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -318,118 +311,6 @@ class _LoginScreenState extends State<LoginScreen>
           borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: purple, width: 1.5),
         ),
-      ),
-    );
-  }
-}
-
-class _OrbitingLogo extends StatelessWidget {
-  final AnimationController controller;
-  const _OrbitingLogo({required this.controller});
-
-  static const Color darkPurple = Color(0xFF1E1338);
-  static const Color gold = Color(0xFFD4AF37);
-  static const Color purple = Color(0xFF482E83);
-
-  static const List<IconData> _orbitIcons = [
-    Icons.schedule_rounded,      // ساعت / مدیریت زمان
-    Icons.calendar_month_rounded, // تقویم / برنامه‌ریزی
-    Icons.smartphone_rounded,    // موبایل
-    Icons.checklist_rounded,     // چک‌لیست کارها
-    Icons.flag_rounded,          // هدف‌گذاری
-    Icons.bar_chart_rounded,     // آمار و گزارش
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, _) {
-        final angleBase = controller.value * 2 * math.pi;
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            // حلقه‌ی راهنما (ظریف)
-            Container(
-              width: 190,
-              height: 190,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.18),
-                  width: 1,
-                ),
-              ),
-            ),
-            // آیکون‌های در حال چرخش
-            for (int i = 0; i < _orbitIcons.length; i++)
-              _buildOrbitIcon(
-                angleBase + (i * (2 * math.pi / _orbitIcons.length)),
-                _orbitIcons[i],
-              ),
-            // لوگوی ثابت یارا در وسط
-            Container(
-              width: 92,
-              height: 92,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: gold.withOpacity(0.4),
-                    blurRadius: 26,
-                    spreadRadius: 2,
-                  ),
-                ],
-                image: const DecorationImage(
-                  image: AssetImage('assets/icon/yara_logo.png'),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildOrbitIcon(double angle, IconData icon) {
-    const radius = 88.0;
-    final dx = radius * math.cos(angle);
-    final dy = radius * math.sin(angle);
-    return Transform.translate(
-      offset: Offset(dx, dy),
-      // آیکون خودش نمی‌چرخد، فقط موقعیتش دور لوگو می‌چرخد
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: darkPurple,
-          shape: BoxShape.circle,
-          border: Border.all(color: gold.withOpacity(0.6), width: 1.2),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.25),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Icon(icon, color: gold, size: 20),
-      ),
-    );
-  }
-}
-
-class _PlaceholderHome extends StatelessWidget {
-  const _PlaceholderHome();
-
-  @override
-  Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: AppBar(title: const Text('یارا')),
-        body: const Center(child: Text('به زودی: داشبورد اصلی یارا')),
       ),
     );
   }
