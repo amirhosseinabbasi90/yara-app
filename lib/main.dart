@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'login_screen.dart';
+import 'orbiting_logo.dart';
 
 void main() {
   runApp(const YaraApp());
@@ -105,18 +106,8 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // لوگوی واقعی یارا
-                      SizedBox(
-                        width: 150,
-                        height: 150,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(32),
-                          child: Image.asset(
-                            'assets/icon/yara_logo.png',
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
+                      // لوگوی یارا با آیکون‌های در حال چرخش
+                      const OrbitingLogo(size: 190),
                       const SizedBox(height: 28),
                       const Text(
                         'یارا',
@@ -156,4 +147,4 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
   }
-}
+}        
